@@ -1,56 +1,29 @@
 services:
 
-  # don't forget get initial password from:
-  # docker compose logs -f vpn | grep pass
   vpn:
-    image: openvpn/openvpn-as
+    image: lscr.io/linuxserver/wireguard
     container_name: vpn
-    devices:
-      - /dev/net/tun:/dev/net/tun
     cap_add:
       - NET_ADMIN
-      - MKNOD
-    ports:
-      - 20000:943 # admin ui, port to be disabled after setup
-      # don't need it because shapeshifter proxy would route to it through internal docker network
-      # - 443:443/tcp 
-      # - 1194:1194/udp
-    volumes:
-      - vpn-data:/openvpn
-    restart: unless-stopped
-    networks:
-      internal:
-        ipv4_address: 10.5.0.2 # vpn is not accessible from the outside
-
-
-  # to see client sertificate: docker compose logs -f
-  # to see additional logs: docker compose exec proxy cat /proxy-state/dispatcher.log
-  proxy:
-    image: denisnovac/shapeshifter
-    container_name: proxy
-    ports:
-     - 443:443 # same as LISTEN_HOST, also should be open on firewall
-    volumes:
-      - ./dockerState:/dockerState # see dockerState/run to modify run script, see run.sh to see examples
-      - proxy-data:/proxy-certs # certificates are persistent
     environment:
-      - TARGET_URL=10.5.0.2:443 # while using network_mode = host it is stil accessible
-      - LISTEN_PORT=443
-      - REAL_HOST_IP=192.168.1.7 # will be written into certificate, MUST BE THE ADDRESS PROXY WILL ACCEPT CONNECTIONS
-      # CHANGE NEW_CERTS TO FALSE AFTER CERTS ARE CREATED AND RESTART!!!
-      # RE-CREATING CERTS MEANS YOU WILL NEED TO PUT NEW KEYS ON YOUR CLIENTS EACH TIME!!!
-      - NEW_CERTS=false
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - SERVERPORT=51820
+      - LOG_CONFS=true
+    volumes:
+      - ./vpnConfig:/config # Re-generate sample keys via /keys/generate.sh and put them into configs before use
+    ports:
+      - 51820:51820/udp
     restart: unless-stopped
-    network_mode: host # proxy is accessible from the outside
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
 
-volumes:
-  vpn-data:
-  proxy-data:
 
-networks:
-  internal:
-    driver: bridge
-    ipam:
-     config:
-       - subnet: 10.5.0.0/16
-         gateway: 10.5.0.1
+  # proxy:
+  #   image: denisnovac/wstunnel
+  #   container_name: proxy
+  #   ports:
+  #     - 443:443
+  #   command: ["/bin/sh", "-c", "exec /home/app/wstunnel server  wss://[::]:443"]
+
