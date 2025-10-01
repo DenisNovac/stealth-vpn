@@ -1,4 +1,9 @@
 
+# wstunnel secret
+read -r -n 64 path_prefix < <(LC_ALL=C tr -dc "[:alnum:]" < /dev/urandom); echo $path_prefix > tunnel
+
+
+
 # to check listened ports:
 ss -tuln | grep tcp
 
@@ -32,3 +37,10 @@ ufw status numbered
 
 # disable rule with 20000 after vpn setup to prohibit admin ui usage
 # ufw delete N 
+
+
+# wg keys (not needed with UI)
+wg genkey > client
+wg pubkey < client > client.pub
+
+wg genkey > preshared
