@@ -5,6 +5,7 @@ read -r -n 64 path_prefix < <(LC_ALL=C tr -dc "[:alnum:]" < /dev/urandom); echo 
 
 
 # to check listened ports:
+ss -tuln 
 ss -tuln | grep tcp
 
 # to check machine ip

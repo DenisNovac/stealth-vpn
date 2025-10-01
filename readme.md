@@ -1,11 +1,14 @@
 # Stealth VPN
 
-See Shapeshifter build in: https://github.com/DenisNovac/shapeshifter-dispatcher
+Stealth VPN in Docker. Wireguard as a VPN with wstunnel before it (analog to obfsproxy) to hide VPN traffic.
 
-I was only able to run the Open Source OpenVPN client which supports SOCKS 5 proxy: https://github.com/OpenVPN/openvpn-gui 
-("OpenVPN Connect" client doesn't support SOCKS5 and therefore doesn't work with Shapeshifter).
+See wg-easy: https://github.com/wg-easy/wg-easy
+See wstunnel: https://github.com/erebe/wstunnel
 
-See bat files for understanding how to run Windows clients.
+WireGuard client: https://download.wireguard.com/windows-client/
+Wstunnel client: https://github.com/erebe/wstunnel/releases
+
+Note: Wstunnel gets deleted by Windows Defender: https://github.com/erebe/wstunnel/issues/224
 
 How to run:
 

@@ -1,18 +1,14 @@
 services:
 
-  
   vpn:
     image: ghcr.io/wg-easy/wg-easy
     container_name: vpn
-    networks:
-      internal:
-        ipv4_address: 10.5.0.3
     volumes:
-      - etc_wireguard:/etc/wireguard
+      - vpn_volume:/etc/wireguard
       - /lib/modules:/lib/modules:ro
     ports:
-      - "51820:51820/udp"
-      - "51821:51821/tcp" # UI
+      #- "51820:51820/udp" # actual VPN, proxy will transfer traffic here so close the port
+      - "20000:51821/tcp" # UI
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -25,25 +21,27 @@ services:
       # double $ if you have it in hash
       # no quotes ''
       - PASSWORD_HASH=$$2a$$12$$oul0TPKvATcH88YeD9LMw.HXy75ISihpTKjW8M9upukw0/Kxx86ze
-      - WG_HOST=192.168.1.7
+      # actual which will be CALLED from client
+      - WG_HOST=10.5.0.2 # in this case - proxy will call it by this address
+    networks:
+      internal:
+        ipv4_address: 10.5.0.2
 
-
-  # proxy:
-  #   image: ghcr.io/erebe/wstunnel
-  #   container_name: proxy
-  #   #ports:
-  #   #  - 443:443
-  #   command: ["/bin/sh", "-c", "exec /home/app/wstunnel server --log-lvl DEBUG --restrict-to 10.5.0.2:51820 --restrict-http-upgrade-path-prefix 'JfvybOEvEya4KjrF1qlwkyEINMy4713wJ7YlLoWV4yAV2hnqMgCgvoQrOn0ui2zL'  wss://0.0.0.0:1443"]
-  #   restart: unless-stopped
-  #   network_mode: host
-  #   # networks:
-  #   #   internal:
-  #   #     ipv4_address: 10.5.0.3
-
-
+  proxy:
+    image: ghcr.io/erebe/wstunnel
+    container_name: proxy
+    ports:
+     - 1443:443
+    # restrict-to to only proxy the calls to VPN
+    # restrict-http-upgrade-path-prefix proxy password, should be same on client, see run.sh for script
+    command: ["/bin/sh", "-c", "exec /home/app/wstunnel server --log-lvl DEBUG --restrict-to 10.5.0.2:51820 --restrict-http-upgrade-path-prefix 'JfvybOEvEya4KjrF1qlwkyEINMy4713wJ7YlLoWV4yAV2hnqMgCgvoQrOn0ui2zL'  wss://0.0.0.0:443"]
+    restart: unless-stopped
+    networks:
+      internal:
+        ipv4_address: 10.5.0.3
 
 volumes:
-  etc_wireguard:
+  vpn_volume:
 
 networks:
   internal:
