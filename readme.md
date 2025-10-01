@@ -12,7 +12,7 @@ For real environments be sure to generate new keys:
 
 ```bash
 # wstunnel secret
-read -r -n 64 path_prefix < <(LC_ALL=C tr -dc "[:alnum:]" < /dev/urandom); echo $path_prefix > tunnel
+read -r -n 64 path_prefix < <(LC_ALL=C tr -dc "[:alnum:]" < /dev/urandom); echo $path_prefix
 
 # wireguard UI secret
 # be sure to change any $ to $$ and not use quotes '' in the compose
