@@ -1,29 +1,54 @@
 services:
 
+  
   vpn:
-    image: lscr.io/linuxserver/wireguard
+    image: ghcr.io/wg-easy/wg-easy
     container_name: vpn
+    networks:
+      internal:
+        ipv4_address: 10.5.0.3
+    volumes:
+      - etc_wireguard:/etc/wireguard
+      - /lib/modules:/lib/modules:ro
+    ports:
+      - "51820:51820/udp"
+      - "51821:51821/tcp" # UI
+    restart: unless-stopped
     cap_add:
       - NET_ADMIN
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-      - SERVERPORT=51820
-      - LOG_CONFS=true
-    volumes:
-      - ./vpnConfig:/config # Re-generate sample keys via /keys/generate.sh and put them into configs before use
-    ports:
-      - 51820:51820/udp
-    restart: unless-stopped
+      - SYS_MODULE
     sysctls:
+      - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      # gen password: docker run ghcr.io/wg-easy/wg-easy wgpw test123
+      # double $ if you have it in hash
+      # no quotes ''
+      - PASSWORD_HASH=$$2a$$12$$oul0TPKvATcH88YeD9LMw.HXy75ISihpTKjW8M9upukw0/Kxx86ze
+      - WG_HOST=192.168.1.7
 
 
   # proxy:
-  #   image: denisnovac/wstunnel
+  #   image: ghcr.io/erebe/wstunnel
   #   container_name: proxy
-  #   ports:
-  #     - 443:443
-  #   command: ["/bin/sh", "-c", "exec /home/app/wstunnel server  wss://[::]:443"]
+  #   #ports:
+  #   #  - 443:443
+  #   command: ["/bin/sh", "-c", "exec /home/app/wstunnel server --log-lvl DEBUG --restrict-to 10.5.0.2:51820 --restrict-http-upgrade-path-prefix 'JfvybOEvEya4KjrF1qlwkyEINMy4713wJ7YlLoWV4yAV2hnqMgCgvoQrOn0ui2zL'  wss://0.0.0.0:1443"]
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   # networks:
+  #   #   internal:
+  #   #     ipv4_address: 10.5.0.3
 
+
+
+volumes:
+  etc_wireguard:
+
+networks:
+  internal:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.5.0.0/16
+         gateway: 10.5.0.1
